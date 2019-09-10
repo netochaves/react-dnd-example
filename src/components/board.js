@@ -1,42 +1,63 @@
 import React from 'react'
-import Square from './square'
 import Knight from './knight'
 import { DndProvider } from 'react-dnd'
+import { connect } from 'react-redux'
 import HTML5Backend from 'react-dnd-html5-backend'
-import { canMoveKnight, moveKnight } from '../Game'
+import { setKnightPosition } from './actions'
+import BoardSquare from './boardSquare'
 
-export const ItemTypes = {
-  KNIGHT: 'knight'
-}
-
-const renderSquare = (i, [knightX, knightY]) => {
-  const x = i % 8
-  const y = Math.floor(i / 8)
-  const isKnightHere = x === knightX && y === knightY
-  const black = (x + y) % 2 === 1
-  const piece = isKnightHere ? <Knight /> : null
-
-  return (
-    <div
-      onClick={() => handleSquareClick(x, y)}
-      key={i}
-      style={{ width: '12.5%', height: '12.5%' }}
-    >
-      <Square black={black}>{piece}</Square>
-    </div>
-  )
-}
-
-const handleSquareClick = (toX, toY) => {
-  if (canMoveKnight(toX, toY)) moveKnight(toX, toY)
-}
-
-export default function Board({ knightPosition }) {
+const Board = ({ position, setKnightPosition }) => {
   const squares = []
-  for (let i = 0; i < 64; i++) {
-    squares.push(renderSquare(i, knightPosition))
+
+  const canMoveKnight = (toX, toY) => {
+    const x = position.kx
+    const y = position.ky
+    const dx = toX - x
+    const dy = toY - y
+
+    return (
+      (Math.abs(dx) === 2 && Math.abs(dy) === 1) ||
+      (Math.abs(dx) === 1 && Math.abs(dy) === 2)
+    )
   }
-  console.log(squares)
+
+  const handleSquareClick = (toX, toY) => {
+    if (canMoveKnight(toX, toY)) {
+      setKnightPosition(toX, toY)
+    }
+  }
+
+  const renderPiece = (x, y, position) => {
+    if (x === position.kx && y === position.ky) {
+      return <Knight />
+    }
+  }
+
+  const renderSquare = i => {
+    const x = i % 8
+    const y = Math.floor(i / 8)
+    return (
+      <div
+        onClick={() => handleSquareClick(x, y)}
+        key={i}
+        style={{ width: '12.5%', height: '12.5%' }}
+      >
+        <BoardSquare
+          x={x}
+          y={y}
+          canMoveKnight={canMoveKnight}
+          moveKnight={handleSquareClick}
+        >
+          {renderPiece(x, y, position)}
+        </BoardSquare>
+      </div>
+    )
+  }
+
+  for (let i = 0; i < 64; i++) {
+    squares.push(renderSquare(i, position))
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div
@@ -52,3 +73,10 @@ export default function Board({ knightPosition }) {
     </DndProvider>
   )
 }
+
+const mapStateToProps = state => state
+
+export default connect(
+  mapStateToProps,
+  { setKnightPosition }
+)(Board)

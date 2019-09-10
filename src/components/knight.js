@@ -1,6 +1,6 @@
 import React from 'react'
 import { useDrag } from 'react-dnd'
-import { ItemTypes } from './board'
+import { ItemTypes } from './actionsTypes'
 
 export default function Knight() {
   const [{ isDragging }, drag] = useDrag({
